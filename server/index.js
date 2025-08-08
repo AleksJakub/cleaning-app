@@ -13,7 +13,9 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 const customerRoutes = require("./routes/customers");
+const authRoutes = require("./routes/auth");
 app.use("/api/customers", customerRoutes);
+app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is up and running 🚀");
