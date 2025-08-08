@@ -38,7 +38,13 @@ router.post("/register", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.status(201).json({ token });
+    const refreshToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_REFRESH_SECRET || "refreshSecret",
+      { expiresIn: "7d" }
+    );
+
+    res.status(201).json({ token, refreshToken });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -71,9 +77,41 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.json({ token });
+    const refreshToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_REFRESH_SECRET || "refreshSecret",
+      { expiresIn: "7d" }
+    );
+
+    res.json({ token, refreshToken });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Refresh access token
+router.post("/refresh", (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ error: "Refresh token is required" });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET || "refreshSecret"
+    );
+
+    const token = jwt.sign(
+      { id: decoded.id, email: decoded.email },
+      process.env.JWT_SECRET || "secret",
+      { expiresIn: "1h" }
+    );
+
+    res.json({ token });
+  } catch (err) {
+    res.status(401).json({ error: "Invalid refresh token" });
   }
 });
 
