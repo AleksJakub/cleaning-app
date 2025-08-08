@@ -1,10 +1,19 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+mongoose
+  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/cleaning-biz")
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+const customerRoutes = require("./routes/customers");
+app.use("/api/customers", customerRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is up and running 🚀");
