@@ -12,6 +12,8 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, default: "user" },
   photoUrl: String,
+  resetToken: String,
+  resetTokenExpiry: Date,
 });
 
 userSchema.pre("save", async function (next) {
