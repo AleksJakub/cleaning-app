@@ -2,6 +2,8 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 const router = express.Router();
 
@@ -112,6 +114,49 @@ router.post("/refresh", (req, res) => {
     res.json({ token });
   } catch (err) {
     res.status(401).json({ error: "Invalid refresh token" });
+  }
+});
+
+// Request password reset
+router.post("/reset-request", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetToken = token;
+    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const resetUrl = `${
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    }/reset-password?token=${token}`;
+
+    await transporter.sendMail({
+      to: user.email,
+      from: process.env.EMAIL_FROM || "no-reply@example.com",
+      subject: "Password Reset Request",
+      text: `Reset your password using this link: ${resetUrl}`,
+    });
+
+    res.json({ message: "Password reset email sent" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
