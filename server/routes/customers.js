@@ -1,7 +1,11 @@
 const express = require("express");
 const Customer = require("../models/Customer");
+const auth = require("../middleware/auth");
 
 const router = express.Router();
+
+// Protect all customer routes
+router.use(auth);
 
 // Get all customers
 router.get("/", async (req, res) => {
