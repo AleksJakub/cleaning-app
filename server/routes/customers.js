@@ -1,6 +1,7 @@
 const express = require("express");
 const Customer = require("../models/Customer");
 const auth = require("../middleware/auth");
+const requireRole = require("../middleware/requireRole");
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.get("/", async (req, res) => {
 });
 
 // Create a customer
-router.post("/", async (req, res) => {
+router.post("/", requireRole("Admin"), async (req, res) => {
   try {
     const customer = new Customer(req.body);
     await customer.save();
@@ -42,7 +43,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Update a customer
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireRole("Admin"), async (req, res) => {
   try {
     const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
